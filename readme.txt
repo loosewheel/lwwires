@@ -110,7 +110,7 @@ Messages:
 	<wire> can be one of the wire colors or numbers. If the string message
 	or wires is nil all wires are queried:
 	{
-		action = "state",
+		action = "power",
 		wires = { "<color>" = true | false[, "<color>" = true | false, ...] }
 	}
 
