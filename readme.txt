@@ -23,13 +23,14 @@ This mod was developed on version 5.4.1
 
 Dependencies
 ============
+default
 mesecons
-
+dye
 
 Optional Dependencies
 =====================
-default
 intllib
+digilines
 
 
 Installation
@@ -39,7 +40,7 @@ Copy the 'lwwires' folder to your mods folder.
 
 Bug Report
 ==========
-
+https://forum.minetest.net/viewtopic.php?f=9&t=27770
 
 
 Description
@@ -49,12 +50,14 @@ bundle cables.
 
 
 Limitations
+-----------
 Breaking or placing wires sends notifications for that color even if
 the power state wasn't changed at the notified position. (See definition
 interface in mod_api.txt about notifications).
 
 
 Bundle Switch
+-------------
 The bundle switch is only defined if digilines is loaded. The bundle switch
 controls every bundle cable on any of the 6 sides with digilines messages.
 
