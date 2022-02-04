@@ -1,0 +1,115 @@
+If a node has the group wires_connect wires will connect to it from any
+side.
+
+If a node has the group bundles_connect bundles will connect to it from
+any side.
+
+A node adjacent to a bundle can have the following interface in its
+definition to respond to bundle cable events:
+def._wires =
+{
+	bundle_on = function (pos, wires)
+		-- called to notify when any wires are turned on
+		-- no return used
+	end,
+
+	bundle_off = function (pos, wires)
+		-- called to notify when any wires are turned off
+		-- no return used
+	end,
+
+	current_state = function (pos, bundle_pos)
+		-- return table where key is color string and
+		-- value is true/false for on/off, for every wire
+	end
+}
+pos is the position of the node.
+wires is a list of wire color strings affected by the action.
+bundle_pos is the position of the bundle cable querying the state.
+
+
+Wire colors and numbers:
+
+black		= 0
+orange	= 1
+magenta	= 2
+sky		= 3
+yellow	= 4
+pink		= 5
+cyan		= 6
+gray		= 7
+silver	= 8
+red		= 9
+green		= 10
+blue		= 11
+brown		= 12
+lime		= 13
+purple	= 14
+white		= 15
+
+
+lwwires.version ()
+	Returns the version string for the mod. eg. "0.1.0".
+
+
+lwwires.wire (idx)
+	Returns either the wire number or wire color depending on idx.
+
+	idx: If a number the color string is returned.
+		  If a color string the wire number is returned.
+		  If idx is not recognized nil is returned.
+
+
+lwwires.color_string_list ()
+	Returns a list of color strings with every wire.
+
+
+lwwires.is_wire_in_list (wire, list)
+	Returns true if wire is in the list of wires.
+
+	wire: Can be wire number or color string.
+	list: List of wire numbers or color strings.
+
+
+lwwires.bundle_on (src_pos, pos, wires)
+	If the node at pos is a bundle turns the wires on.
+
+	src_pos: The position of the device taking the action, usually adjacent
+				to the bundle position. This position will not receive the
+				notification. This can be nil.
+	pos: Position of bundle node.
+	wires: Can be wire number, color string, or a list of wire numbers or
+			 color strings.
+
+	Returns true if successful, false if not (either pos is not a bundle
+	or wires is invalid).
+
+
+lwwires.bundle_off (src_pos, pos, wires)
+	If the node at pos is a bundle turns the wires off.
+
+	src_pos: The position of the device taking the action, usually adjacent
+				to the bundle position. This position will not receive the
+				notification. This can be nil.
+	pos: Position of bundle node.
+	wires: Can be wire number, color string, or a list of wire numbers or
+			 color strings.
+
+	Returns true if successful, false if not (either pos is not a bundle
+	or wires is invalid).
+
+
+lwwires.bundle_power (pos, wires)
+	Returns a table of powered wires for the bundle at pos, or nil if pos is
+	not a bundle.
+
+	pos: Position of bundle node.
+	wires: Can be wire number, color string, a list of wire numbers or
+			 color strings, or nil. If nil all 16 wires are returned.
+
+	In the returned table the key is the color string, and its value is true
+	if powered or false if not.
+
+
+
+--
