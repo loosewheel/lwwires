@@ -1,3 +1,13 @@
 
-v 0.1.0
+v0.1.0
 *	Initial alpha
+
+
+v0.1.1
+*	Changed state response message to current_state.
+*	Changed power response message to current_power.
+*	Darkened cyan wire color.
+*	Improved power state on place and dig.
+*	Improved circuit analysis.
+*	Added bundle blocks.
+*	Mesecons conductors and effectors turn on when placed on a live wire.

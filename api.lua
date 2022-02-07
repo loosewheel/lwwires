@@ -34,7 +34,7 @@ function lwwires.bundle_on (src_pos, pos, wires)
 		return false
 	end
 
-	utils.wire_connections:turn_on (src_pos, colors, pos, true)
+	utils.wire_connections.turn_on (src_pos, colors, pos, true)
 end
 
 
@@ -52,7 +52,7 @@ function lwwires.bundle_off (src_pos, pos, wires)
 		return false
 	end
 
-	utils.wire_connections:turn_off (src_pos, colors, pos, true)
+	utils.wire_connections.turn_off (src_pos, colors, pos, true)
 end
 
 
@@ -68,7 +68,7 @@ function lwwires.bundle_power (pos, wires)
 		wires = utils.color_string_list ()
 	end
 
-	return utils.wire_connections:power_at_pos (wires, pos)
+	return utils.wire_connections.power_at_pos (wires, pos)
 end
 
 

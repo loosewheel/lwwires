@@ -13,7 +13,7 @@ CC-BY-SA 3.0
 
 Version
 =======
-0.1.0
+0.1.1
 
 
 Minetest Version
@@ -46,8 +46,9 @@ https://forum.minetest.net/viewtopic.php?f=9&t=27770
 
 Description
 ===========
-This mod provides wires and bundle cables. 16 colored wires and 16 colored
-bundle cables.
+This mod provides wires, bundle cables and bundle blocks. 16 colored wires
+and 16 colored bundle cables. Bundle blocks are the same as bundle cables
+but full node size.
 
 
 Limitations
@@ -94,7 +95,7 @@ Messages:
 	of the queried wires. <wire> can be one of the wire colors or numbers.
 	If the string message or wires is nil all wires are queried:
 	{
-		action = "state",
+		action = "current_state",
 		wires = { "<color>" = true | false[, "<color>" = true | false, ...] }
 	}
 
@@ -110,7 +111,7 @@ Messages:
 	<wire> can be one of the wire colors or numbers. If the string message
 	or wires is nil all wires are queried:
 	{
-		action = "power",
+		action = "current_power",
 		wires = { "<color>" = true | false[, "<color>" = true | false, ...] }
 	}
 

@@ -42,7 +42,8 @@ local function register_bundle (color)
 			connect_right = 	{  2/16, -8/16, -2/16,  8/16, -4/16,  2/16 }
 		},
 		connect_sides = { "top", "front", "left", "back", "right" },
-		connects_to = { "group:lwwires_wire", "lwwires:bundle_"..color, "group:bundles_connect" },
+		connects_to = { "group:lwwires_wire", "lwwires:bundle_"..color,
+							 "lwwires:bundle_block_"..color, "group:bundles_connect" },
 
 		selection_box = {
 			type = "connected",
@@ -56,16 +57,18 @@ local function register_bundle (color)
 
 		drop = "lwwires:bundle_"..color,
 
-		on_construct = function (pos)
-			utils.wire_connections:add_node (pos, "bundle", color.."")
+		_wires =
+		{
+			color = color.."",
+			type = "bundle"
+		},
 
-			utils.wire_connections:place_bundle (pos)
+		on_construct = function (pos)
+			utils.wire_connections.on_construct_bundle (pos)
 		end,
 
 		on_destruct = function (pos)
-			utils.wire_connections:dig_bundle (pos)
-
-			utils.wire_connections:remove_node (pos)
+			mesecon.queue:add_action (pos, "lwwires_bundle_on_destruct", { color.."" }, 0.1, true, 0)
 		end,
 	})
 end

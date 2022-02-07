@@ -307,6 +307,133 @@ minetest.register_craft ({
 })
 
 
+minetest.register_craft ({
+	output = "lwwires:bundle_block_black",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_black" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_orange",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_orange" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_magenta",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_magenta" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_sky",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_sky" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_yellow",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_yellow" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_pink",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_pink" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_cyan",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_cyan" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_gray",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_gray" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_silver",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_silver" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_red",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_red" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_green",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_green" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_blue",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_blue" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_brown",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_brown" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_lime",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_lime" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_purple",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_purple" }
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:bundle_block_white",
+	recipe = {
+		{ "default:stone", "lwwires:bundle_white" }
+	}
+})
+
 
 if utils.digilines_supported then
 

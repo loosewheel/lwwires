@@ -253,4 +253,42 @@ end
 
 
 
+function utils.get_wires_interface (pos)
+	local node = utils.get_far_node (pos)
+
+	if node then
+		local def = minetest.registered_nodes[node.name]
+
+		if def then
+			return def._wires
+		end
+	end
+
+	return nil
+end
+
+
+
+function utils.get_component_interface (pos)
+	local node = utils.get_far_node (pos)
+
+	if node then
+		local def = minetest.registered_nodes[node.name]
+
+		if def then
+			if def._wires then
+				return node, def._wires, nil
+			end
+
+			if def.mesecons then
+				return node, nil, def.mesecons
+			end
+		end
+	end
+
+	return nil, nil, nil
+end
+
+
+
 --

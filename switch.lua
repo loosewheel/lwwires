@@ -119,7 +119,7 @@ local function send_state (pos, channel, wires)
 
 	local msg =
 	{
-		action = "state",
+		action = "current_state",
 		wires = { }
 	}
 
@@ -137,7 +137,7 @@ end
 local function send_power (pos, channel, wires)
 	local msg =
 	{
-		action = "power",
+		action = "current_power",
 		wires = { }
 	}
 

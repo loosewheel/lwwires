@@ -2,12 +2,16 @@ local utils = ...
 local S = utils.S
 
 
--- flag to lock out mesecons updating
-local lockout = false
 
-mesecon.queue:add_function ("lwwires_wire_on_construct", function (pos)
-	lockout = false
-end)
+local mesecons_rules =
+{
+	{ x = -1, y =  0, z =  0 },
+	{ x =  1, y =  0, z =  0 },
+	{ x =  0, y =  0, z = -1 },
+	{ x =  0, y =  0, z =  1 },
+	{ x =  0, y = -1, z =  0 },
+	{ x =  0, y =  1, z =  0 },
+}
 
 
 
@@ -65,42 +69,32 @@ local function register_wire (color)
 
 		drop = "lwwires:"..color,
 
+		_wires =
+		{
+			color = color.."",
+			type = "wire"
+		},
+
 		mesecons = {
 			effector = {
-				rules = {
-								{ x = -1, y =  0, z =  0 },
-								{ x =  1, y =  0, z =  0 },
-								{ x =  0, y =  0, z = -1 },
-								{ x =  0, y =  0, z =  1 },
-								{ x =  0, y = -1, z =  0 },
-								{ x =  0, y =  1, z =  0 },
-				},
+				rules = mesecons_rules,
 
 				action_on = function (pos, node)
-					utils.wire_connections:turn_on (pos, color.."", pos, false)
+					utils.wire_connections.turn_on (pos, color.."", pos, false)
 				end,
 
 				action_off = function (pos, node)
-					if not lockout then
-						utils.wire_connections:turn_off_wire (color.."", pos)
-					end
+					utils.wire_connections.turn_off_wire (color.."", pos)
 				end,
 			}
 		},
 
 		on_construct = function (pos)
-			utils.wire_connections:add_node (pos, "wire", color.."")
-
-			lockout = true
-			mesecon.queue:add_action (pos, "lwwires_wire_on_construct", { }, nil, true, 0)
-
-			utils.wire_connections:place_wire (color.."", pos)
+			mesecon.queue:add_action (pos, "lwwires_wire_on_construct", { color.."" }, 0.1, true, 0)
 		end,
 
 		on_destruct = function (pos)
-			utils.wire_connections:dig_wire (color.."", pos)
-
-			utils.wire_connections:remove_node (pos)
+			utils.wire_connections.on_destruct_wire (color.."", pos)
 		end,
 	})
 end
