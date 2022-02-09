@@ -1,4 +1,4 @@
-local version = "0.1.1"
+local version = "0.1.2"
 
 
 
@@ -30,6 +30,12 @@ loadfile (utils.modpath.."/crafting.lua") (utils)
 
 mesecon.queue:add_function ("lwwires_wire_on_construct", function (pos, color)
 	utils.wire_connections.on_construct_wire (color, pos)
+end)
+
+
+
+mesecon.queue:add_function ("lwwires_wire_on_blast", function (pos, color)
+	utils.wire_connections.on_blast_wire (color, pos)
 end)
 
 

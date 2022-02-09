@@ -11,3 +11,8 @@ v0.1.1
 *	Improved circuit analysis.
 *	Added bundle blocks.
 *	Mesecons conductors and effectors turn on when placed on a live wire.
+
+
+v0.1.2
+*	Improved circuit analysis.
+*	Improved mesecons integration.

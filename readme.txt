@@ -13,7 +13,7 @@ CC-BY-SA 3.0
 
 Version
 =======
-0.1.1
+0.1.2
 
 
 Minetest Version
@@ -56,6 +56,9 @@ Limitations
 Breaking or placing wires sends notifications for that color even if
 the power state wasn't changed at the notified position. (See definition
 interface in mod_api.txt about notifications).
+
+The first wire to a complex mesecons device (such as gates) must be a
+mesecons wire.
 
 
 Bundle Switch

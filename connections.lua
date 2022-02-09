@@ -100,7 +100,11 @@ local notify_positions = { }
 local function add_node_notify_on (pos)
 	for i = 1, #switch_coords, 1 do
 		local test_pos = vector.add (pos, switch_coords[i])
-		notify_positions[minetest.pos_to_string (test_pos, 0)] = true
+		local wires = utils.get_wires_interface (test_pos)
+
+		if wires and wires.bundle_on then
+			notify_positions[minetest.pos_to_string (test_pos, 0)] = true
+		end
 	end
 end
 
@@ -109,7 +113,11 @@ end
 local function add_node_notify_off (pos)
 	for i = 1, #switch_coords, 1 do
 		local test_pos = vector.add (pos, switch_coords[i])
-		notify_positions[minetest.pos_to_string (test_pos, 0)] = true
+		local wires = utils.get_wires_interface (pos)
+
+		if wires and wires.bundle_off then
+			notify_positions[minetest.pos_to_string (test_pos, 0)] = true
+		end
 	end
 end
 
@@ -121,10 +129,10 @@ local function notify_on (action_wires, action_pos)
 			local pos = minetest.string_to_pos (k)
 
 			if pos then
-				local inter = utils.get_wires_interface (pos)
+				local wires = utils.get_wires_interface (pos)
 
-				if inter and inter.bundle_on then
-					inter.bundle_on (pos, table.copy (action_wires))
+				if wires and wires.bundle_on then
+					wires.bundle_on (pos, table.copy (action_wires))
 				end
 			end
 		end
@@ -141,10 +149,10 @@ local function notify_off (action_wires, action_pos)
 			local pos = minetest.string_to_pos (k)
 
 			if pos then
-				local inter = utils.get_wires_interface (pos)
+				local wires = utils.get_wires_interface (pos)
 
-				if inter and inter.bundle_off then
-					inter.bundle_off (pos, table.copy (action_wires))
+				if wires and wires.bundle_off then
+					wires.bundle_off (pos, table.copy (action_wires))
 				end
 			end
 		end
@@ -155,38 +163,223 @@ end
 
 
 
--- is mesecons turned on
-local function is_mesecons_on (node)
-	if node then
-		local def = minetest.registered_nodes[node.name]
+local function get_mesecons_rules (src_rules, rules_node)
+	if src_rules then
+		if type (src_rules) == "function" then
+			return src_rules (rules_node)
+		end
+	else
+		return mesecon.rules.default
+	end
 
-		if def then
-			local mese = def.mesecons
+	return src_rules
+end
 
-			if mese then
-				if mese.conductor then
-					if mese.conductor.state then
-						if mese.conductor.state == mesecon.state.on then
-							return true
-						end
-					elseif mese.conductor.states then
-						if mesecon.getstate (node.name, mese.conductor.states) ~= 1 then
-							return true
-						end
-					end
-				end
 
-				if mese.receptor and mese.receptor.state == mesecon.state.on then
-					return true
-				end
 
-				if mese.effector and mese.effector.action_off and
-					minetest.get_item_group (node.name, "lwwires_wire") == 0 then
+-- get flattened linked rules from pos to linked_pos
+local function get_linked_rules (pos, linked_pos, src_rules, rules_node)
+	local rules = get_mesecons_rules (src_rules, rules_node)
+	local linked = { }
+	local rule = nil
 
-					return true
+	if #rules > 0 and #rules[1] > 0 then
+		-- as individual rule sets
+		for _, rs in ipairs (rules) do
+			for _, r in ipairs (rs) do
+				if r.x and r.y and r.z and vector.equals (linked_pos, vector.add (pos, r)) then
+					linked[#linked + 1] = table.copy (rs)
+					rule = table.copy (r)
+
+					break
 				end
 			end
 		end
+
+	else
+		for _, r in ipairs (rules) do
+			if r.x and r.y and r.z and vector.equals (linked_pos, vector.add (pos, r)) then
+				linked = table.copy (rules)
+				rule = table.copy (r)
+
+				break
+			end
+		end
+	end
+
+	if #linked > 0 then
+		return mesecon.flattenrules (linked, rules_node), rule
+	end
+
+	return nil, nil
+end
+
+
+
+-- does pos at rule connect back by its rules
+local function is_connected_by_rule (pos, rule, conductors, receptors, effectors)
+	if rule.x and rule.y and rule.z then
+		local tpos = vector.add (pos, rule)
+		local node, wire, mese = utils.get_component_interface (tpos)
+
+		if wire then
+			return (rule.y ~= 0 and rule.x == 0 and rule.z == 0) or
+					 (rule.y == 0 and rule.x ~= 0 and rule.z == 0) or
+					 (rule.y == 0 and rule.x == 0 and rule.z ~= 0)
+		end
+
+		if mese then
+			if conductors and mese.conductor then
+				local rs, r = get_linked_rules (tpos, pos, mese.conductor.rules, node)
+
+				if r then
+					return true
+				end
+
+			elseif receptors and mese.receptor then
+				local rs, r = get_linked_rules (tpos, pos, mese.receptor.rules, node)
+
+				if r then
+					return true
+				end
+
+			elseif effectors and mese.effector then
+				local rs, r = get_linked_rules (tpos, pos, mese.effector.rules, node)
+
+				if r then
+					return true
+				end
+
+			end
+		end
+	end
+
+	return false
+end
+
+
+
+-- does pos at any rule connect back by its rules
+local function is_connected_by_rules (pos, connect_pos, test, test_back)
+	local node, wires, mese = utils.get_component_interface (pos)
+
+	if wires then
+		return true
+	end
+
+	local conductors = (test_back and test_back.conductors) or false
+	local receptors = (test_back and test_back.receptors) or false
+	local effectors = (test_back and test_back.effectors) or false
+	local one_way = test_back == nil
+
+	if mese then
+		if test.conductors and mese.conductor then
+			local rs, r = get_linked_rules (pos, connect_pos, mese.conductor.rules, node)
+
+			if r then
+				if one_way then
+					return true
+				else
+					return is_connected_by_rule (pos, r, conductors, receptors, effectors)
+				end
+			end
+		end
+
+		if test.receptors and mese.receptor then
+			local rs, r = get_linked_rules (pos, connect_pos, mese.receptor.rules, node)
+
+			if r then
+				if one_way then
+					return true
+				else
+					return is_connected_by_rule (pos, r, conductors, receptors, effectors)
+				end
+			end
+		end
+
+		if test.effectors and mese.effector then
+			local rs, r = get_linked_rules (pos, connect_pos, mese.effector.rules, node)
+
+			if r then
+				if one_way then
+					return true
+				else
+					return is_connected_by_rule (pos, r, conductors, receptors, effectors)
+				end
+			end
+		end
+	end
+
+	return false
+end
+
+
+
+local function is_conductor_on (conductor, node, pos, ref_pos)
+	if conductor then
+		if conductor.state then
+			return conductor.state == mesecon.state.on
+		end
+
+		if conductor.states then
+			if not ref_pos then
+				return mesecon.getstate (node.name, conductor.states) ~= 1
+			end
+
+			local rulename = vector.subtract (ref_pos, pos)
+
+			local bit = mesecon.rule2bit (rulename, get_mesecons_rules (conductor.rules, node))
+			local binstate = mesecon.getbinstate (node.name, conductor.states)
+
+			return mesecon.get_bit (binstate, bit)
+		end
+	end
+
+	return false
+end
+
+
+
+local function is_conductor_off (conductor, node, pos, ref_pos)
+	if conductor then
+		if conductor.state then
+			return conductor.state == mesecon.state.off
+		end
+
+		if conductor.states then
+			if not ref_pos then
+				return mesecon.getstate (node.name, conductor.states) == 1
+			end
+
+			local rulename = vector.subtract (ref_pos, pos)
+			local bit = mesecon.rule2bit (rulename, get_mesecons_rules (conductor.rules, node))
+			local binstate = mesecon.getbinstate (node.name, conductor.states)
+
+			return not mesecon.get_bit (binstate, bit)
+		end
+	end
+
+	return false
+end
+
+
+
+-- is mesecons turned on
+local function is_mesecons_on (pos, connect_pos, conductors, receptors, effectors)
+	local node, wires, mese = utils.get_component_interface (pos)
+
+	if not wires and mese then
+		local test =
+		{
+			conductors = conductors and mese.conductor and
+							 is_conductor_on (mese.conductor, node, pos, connect_pos),
+			receptors = receptors and mese.receptor and
+							mese.receptor.state == mesecon.state.on,
+			effectors = effectors and mese.effector and
+							(mese.effector.action_off or mese.effector.action_change)
+		}
+
+		return is_connected_by_rules (pos, connect_pos, test, nil)
 	end
 
 	return false
@@ -195,37 +388,21 @@ end
 
 
 -- is any mesecons turned off
-local function is_mesecons_off (node)
-	if node then
-		local def = minetest.registered_nodes[node.name]
+local function is_mesecons_off (pos, connect_pos, conductors, receptors, effectors)
+	local node, wires, mese = utils.get_component_interface (pos)
 
-		if def then
-			local mese = def.mesecons
+	if not wires and mese then
+		local test =
+		{
+			conductors = conductors and mese.conductor and
+							 is_conductor_off (mese.conductor, node, pos, connect_pos),
+			receptors = receptors and mese.receptor and
+							mese.receptor.state == mesecon.state.off,
+			effectors = effectors and mese.effector and
+							(mese.effector.action_on or mese.effector.action_change)
+		}
 
-			if mese then
-				if mese.conductor then
-					if mese.conductor.state then
-						if mese.conductor.state == mesecon.state.off then
-							return true
-						end
-					elseif mese.conductor.states then
-						if mesecon.getstate (node.name, mese.conductor.states) == 1 then
-							return true
-						end
-					end
-				end
-
-				if mese.receptor and mese.receptor.state == mesecon.state.off then
-					return true
-				end
-
-				if mese.effector and mese.effector.action_on and
-					minetest.get_item_group (node.name, "lwwires_wire") == 0 then
-
-					return true
-				end
-			end
-		end
+		return is_connected_by_rules (pos, connect_pos, test, nil)
 	end
 
 	return false
@@ -234,19 +411,17 @@ end
 
 
 -- is mesecons power state on
-local function is_mesecons_power (node)
-	if node then
-		local def = minetest.registered_nodes[node.name]
+local function is_mesecons_power (pos, connect_pos)
+	local node, wires, mese = utils.get_component_interface (pos)
 
-		if def then
-			local mese = def.mesecons
+	if not wires and mese and mese.receptor and
+			mese.receptor.state == mesecon.state.on then
 
-			if mese then
-				if mese.receptor and mese.receptor.state == mesecon.state.on then
-					return true
-				end
-			end
+		if connect_pos then
+			return is_connected_by_rules (pos, connect_pos, { receptors = true }, nil)
 		end
+
+		return true
 	end
 
 	return false
@@ -258,63 +433,23 @@ end
 local function is_mesecons_component (pos)
 	local node, wires, mese = utils.get_component_interface (pos)
 
-	return mese ~= nil
+	return not wires and mese ~= nil
 end
 
 
 
 -- look for adjacent bundle power source
 local function find_bundle_power_source (pos, color, check_list)
-	for i = 1, #powered_coords, 1 do
-		local test_pos = vector.add (pos, powered_coords[i])
-		local spos = minetest.pos_to_string (test_pos, 0)
-
-		if check_list[spos] then
-			return false
-		end
+	for i = 1, #switch_coords, 1 do
+		local test_pos = vector.add (pos, switch_coords[i])
 
 		local wires = utils.get_wires_interface (test_pos)
 
 		if wires and wires.current_state then
 			local state = wires.current_state (test_pos, vector.new (pos))
 
-			check_list[spos] = true
-
 			if type (state) == "table" then
 				if state[color] then
-					return true
-				end
-			end
-		end
-	end
-
-	return false
-end
-
-
--- does pos at rule connect back by its rules
-local function is_connected_by_rules (pos, rule)
-	local tpos = vector.add (pos, rule)
-	local node, wire, mese = utils.get_component_interface (tpos)
-
-	if wire then
-		return true
-	end
-
-	if mese then
-		local rules = nil
-
-		if mese.conductor then
-			rules = mesecon.conductor_get_rules (node)
-		elseif mese.receptor then
-			rules = mesecon.receptor_get_rules (node)
-		elseif mese.effector then
-			rules = mesecon.effector_get_rules (node)
-		end
-
-		if rules then
-			for _, v in ipairs (rules) do
-				if vector.equals (pos, vector.add (tpos, v)) then
 					return true
 				end
 			end
@@ -374,36 +509,24 @@ local function check_for_power (color, pos, caller_pos, caller_type,
 
 	elseif mese then
 		if mese.receptor and mese.receptor.state == mesecon.state.on then
-			power_found = true
+			local tb = (is_mesecons and { conductors = true }) or nil
 
-			return false, true, caller_type, caller_color, true
+			if is_connected_by_rules (pos, caller_pos, { receptors = true }, tb) then
+				power_found = true
+
+				return false, false, caller_type, caller_color, true
+			end
 		end
 
-		if mese.conductor then
-			local conductor_on = false
+		if mese.conductor and is_conductor_on (mese.conductor, node, pos, caller_pos) then
+			local rules = get_linked_rules (pos, caller_pos, mese.conductor.rules, node)
 
-			if mese.conductor.state then
-				conductor_on = mese.conductor.state == mesecon.state.on
-			elseif mese.conductor.states then
-				conductor_on = mesecon.getstate (node.name, mese.conductor.states) ~= 1
-			end
+			check_list[minetest.pos_to_string (pos, 0)] = true
 
-			if conductor_on then
-				local rules = mese.conductor.rules
-
-				if rules then
-					if type (rules) == "function" then
-						rules = rules (node)
-					end
-				else
-					rules = mesecon.rules.default
-				end
-
-				check_list[minetest.pos_to_string (pos, 0)] = true
-
-				for i = 1, #rules do
-					if is_connected_by_rules (pos, rules[i]) then
-						for_each_recurse (color, vector.add (pos, rules[i]), pos, caller_type,
+			if rules then
+				for _, r in ipairs (rules) do
+					if is_connected_by_rule (pos, r, true, true, false) then
+						for_each_recurse (color, vector.add (pos, r), pos, caller_type,
 												caller_color, true, check_for_power, powered_coords, check_list)
 
 						if power_found then
@@ -412,6 +535,10 @@ local function check_for_power (color, pos, caller_pos, caller_type,
 					end
 				end
 			end
+		end
+
+		if mese.effector then
+			return false, true, caller_type, caller_color, true
 		end
 
 	end
@@ -424,7 +551,7 @@ end
 -- check single color
 local function is_pos_powered_wire (color, pos, exclude_pos, check_self, check_list)
 	if check_self then
-		if is_mesecons_power (utils.get_far_node (pos)) then
+		if is_mesecons_power (pos, exclude_pos) then
 			return true
 		end
 	end
@@ -487,13 +614,13 @@ end
 -- check one or more colors
 local function is_pos_powered (color, pos, exclude_pos, check_self, check_list)
 	if check_self then
-		if is_mesecons_power (utils.get_far_node (pos)) then
+		if is_mesecons_power (pos, exclude_pos) then
 			return "mesecons"
 		end
 	end
 
 	if color then
-		if is_pos_powered_wire (color, pos, exclude_pos, check_self, check_list) then
+		if is_pos_powered_wire (color, pos, exclude_pos, false, check_list) then
 			return color
 		end
 	else
@@ -503,7 +630,7 @@ local function is_pos_powered (color, pos, exclude_pos, check_self, check_list)
 		for i = 1, #colors, 1 do
 			local cl = table.copy (check_list)
 
-			if is_pos_powered_wire (colors[i], pos, exclude_pos, check_self, cl) then
+			if is_pos_powered_wire (colors[i], pos, exclude_pos, false, cl) then
 				powered[#powered + 1] = colors[i]
 			end
 		end
@@ -606,11 +733,11 @@ end
 local function get_switchable_sides_on (pos)
 	local rules = { }
 
-	for i = 1, #switch_coords do
-		local node = utils.get_far_node (vector.add (pos, switch_coords[i]))
+	for i = 1, #powered_coords do
+		local tpos = vector.add (pos, powered_coords[i])
 
-		if is_mesecons_off (node) then
-			rules[#rules + 1] = table.copy (switch_coords[i])
+		if is_mesecons_off (tpos, pos, true, false, true) then
+			rules[#rules + 1] = table.copy (powered_coords[i])
 		end
 	end
 
@@ -669,22 +796,21 @@ end
 
 -- turn power on at pos, must be wire or bundle
 -- if src_pos is give will not be notified
-function connections.turn_on (src_pos, wires, pos, bundle)
+function connections.turn_on (src_pos, wires, pos)
 	local spos = minetest.pos_to_string (pos, 0)
 	local inter = utils.get_wires_interface (pos)
 
 	if inter then
-		local colors = utils.wires_to_color_list (wires)
-		local action_wires = colors
+		local action_wires = utils.wires_to_color_list (wires)
 		local action_pos = (src_pos and minetest.pos_to_string (src_pos, 0)) or ""
 
-		for i = 1, #colors, 1 do
-			local sides = get_unpowered_directions (colors[i], pos)
+		for i = 1, #action_wires, 1 do
+			local sides = get_unpowered_directions (action_wires[i], pos)
 			local check_list = { [spos] = true }
 
 			if sides then
 				for j = 1, #sides, 1 do
-					for_each (colors[i], vector.add (pos, sides[j]),
+					for_each (action_wires[i], vector.add (pos, sides[j]),
 								 turn_wire_on, false, powered_coords, check_list)
 				end
 			end
@@ -710,8 +836,8 @@ function connections.on_construct_wire (color, pos)
 		local action_pos = minetest.pos_to_string (pos, 0)
 
 		if sides_on then
-			for j = 1, #switch_coords, 1 do
-				for_each (color, vector.add (pos, switch_coords[j]),
+			for j = 1, #powered_coords, 1 do
+				for_each (color, vector.add (pos, powered_coords[j]),
 							 turn_wire_on, false, powered_coords, { [spos] = true })
 			end
 
@@ -739,13 +865,13 @@ function connections.on_construct_bundle (pos)
 			if sides_on then
 				sides_on = { }
 
-				for j = 1, #switch_coords, 1 do
-					local twires = utils.get_wires_interface (vector.add (pos, switch_coords[j]))
+				for j = 1, #powered_coords, 1 do
+					local twires = utils.get_wires_interface (vector.add (pos, powered_coords[j]))
 
 					if not twires or not twires.type or twires.type ~= "bundle" or
 						(twires.type == "bundle" and twires.color == wires.color) then
 
-						sides_on[#sides_on + 1] = switch_coords[j]
+						sides_on[#sides_on + 1] = powered_coords[j]
 					end
 				end
 
@@ -807,11 +933,11 @@ end
 local function get_switchable_sides_off (pos)
 	local rules = { }
 
-	for i = 1, #switch_coords do
-		local node = utils.get_far_node (vector.add (pos, switch_coords[i]))
+	for i = 1, #powered_coords do
+		local tpos = vector.add (pos, powered_coords[i])
 
-		if is_mesecons_on (node) then
-			rules[#rules + 1] = table.copy (switch_coords[i])
+		if is_mesecons_on (tpos, pos, true, false, true) then
+			rules[#rules + 1] = table.copy (powered_coords[i])
 		end
 	end
 
@@ -825,13 +951,13 @@ end
 
 
 -- turn off according to rules but only if not powered
-local function turn_off_nodes (pos, rules, check_list)
+local function turn_off_nodes (color, pos, rules, check_list)
 	check_list = check_list or { }
 
 	for i = #rules, 1, -1 do
 		local tpos = vector.add (pos, rules[i])
 		local cl = table.copy (check_list)
-		local power = is_pos_powered (nil, tpos, pos, false, cl)
+		local power = is_pos_powered (color, tpos, pos, true, cl)
 
 		if power then
 			table.remove (rules, i)
@@ -866,7 +992,7 @@ local function turn_wire_off (color, pos, caller_pos, caller_type,
 			local rules = get_switchable_sides_off (pos)
 
 			if rules then
-				turn_off_nodes (pos, rules, check_list)
+				turn_off_nodes (color, pos, rules, check_list)
 			end
 
 			return true, true, wires.type, wires.color, false
@@ -883,7 +1009,7 @@ local function switch_pos_off (pos)
 	local rules = get_switchable_sides_off (pos)
 
 	if rules then
-		turn_off_nodes (pos, rules)
+		turn_off_nodes (nil, pos, rules)
 	end
 end
 
@@ -896,17 +1022,15 @@ function connections.turn_off (src_pos, wires, pos, bundle)
 	local inter = utils.get_wires_interface (pos)
 
 	if inter then
-		local colors = utils.wires_to_color_list (wires)
-
-		local action_wires = colors
+		local action_wires = utils.wires_to_color_list (wires)
 		local action_pos = (src_pos and minetest.pos_to_string (src_pos, 0)) or ""
 
-		for i = 1, #colors, 1 do
-			local sides = get_unpowered_directions (colors[i], pos)
+		for i = 1, #action_wires, 1 do
+			local sides = get_unpowered_directions (action_wires[i], pos)
 
 			if sides then
 				for j = 1, #sides, 1 do
-					for_each (colors[i], vector.add (pos, sides[j]),
+					for_each (action_wires[i], vector.add (pos, sides[j]),
 								 turn_wire_off, false, powered_coords, { })
 				end
 			end
@@ -971,11 +1095,51 @@ function connections.on_destruct_wire (color, pos)
 		end
 
 		if #switch_off_rules > 0 then
-			turn_off_nodes (pos, switch_off_rules, { [spos] = true })
+			turn_off_nodes (color, pos, switch_off_rules, { [spos] = true })
 		end
 
 		notify_off (action_wires, action_pos)
 	end
+end
+
+
+
+-- called from queued mesecons function in on_blast
+function connections.on_blast_wire (color, pos)
+	local spos = minetest.pos_to_string (pos, 0)
+	local action_wires = { color }
+	local action_pos = spos
+
+	for i = 1, #action_wires, 1 do
+		local sides_off = { }
+
+		for j = 1, #powered_coords, 1 do
+			if not is_pos_powered (color, vector.add(pos, powered_coords[j]),
+										  pos, false, { [spos] = true }) then
+				sides_off[#sides_off + 1] = powered_coords[j]
+			end
+		end
+
+		local sides = { }
+
+		for j = 1, #sides_off, 1 do
+			local twires = utils.get_wires_interface (vector.add (pos, sides_off[j]))
+
+			if not twires or not twires.type or twires.type ~= "bundle" or
+				(twires.type == "bundle" and twires.color == color) then
+
+				sides[#sides + 1] = sides_off[j]
+			end
+		end
+
+
+		for j = 1, #sides, 1 do
+			for_each (color, vector.add (pos, sides[j]),
+						 turn_wire_off, false, powered_coords, { [spos] = true })
+		end
+	end
+
+	notify_off (action_wires, action_pos)
 end
 
 

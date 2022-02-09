@@ -45,6 +45,14 @@ local function register_bundle_block (color)
 		on_destruct = function (pos)
 			mesecon.queue:add_action (pos, "lwwires_bundle_on_destruct", { color.."" }, 0.1, true, 0)
 		end,
+
+		on_blast = function (pos, intensity)
+			local node = minetest.get_node (pos)
+
+			minetest.remove_node (pos)
+
+			return minetest.get_node_drops (node.name, "")
+		end,
 	})
 end
 

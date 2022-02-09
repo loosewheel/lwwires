@@ -21,7 +21,7 @@ local function register_wire (color)
 		short_description = S("Wire ("..color..")"),
 		groups = { dig_immediate = 2, lwwires_wire = 1 },
 		inventory_image = "lwwires_"..color.."_item.png",
-		wield_image = "lwwires_"..color.."_item.png",
+		wield_image = "lwwires_"..color.."_wield.png",
 		wield_scale = {x = 1, y = 1, z = 1},
 		stack_max = 99,
 		liquids_pointable = false,
@@ -80,7 +80,7 @@ local function register_wire (color)
 				rules = mesecons_rules,
 
 				action_on = function (pos, node)
-					utils.wire_connections.turn_on (pos, color.."", pos, false)
+					utils.wire_connections.turn_on (pos, color.."", pos)
 				end,
 
 				action_off = function (pos, node)
@@ -94,7 +94,16 @@ local function register_wire (color)
 		end,
 
 		on_destruct = function (pos)
-			utils.wire_connections.on_destruct_wire (color.."", pos)
+			utils.wire_connections.on_destruct_wire (color, pos)
+		end,
+
+		on_blast = function (pos, intensity)
+			local node = minetest.get_node (pos)
+
+			minetest.remove_node (pos)
+			mesecon.queue:add_action (pos, "lwwires_wire_on_blast", { color.."" }, 0.1, true, 0)
+
+			return minetest.get_node_drops (node.name, "")
 		end,
 	})
 end

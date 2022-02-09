@@ -291,6 +291,17 @@ end
 
 
 
+local function	on_blast (pos, intensity)
+	local node = minetest.get_node (pos)
+
+	switch_off (pos, utils.color_string_list ())
+	minetest.remove_node (pos)
+
+	return minetest.get_node_drops (node.name, "")
+end
+
+
+
 local function on_receive_fields (pos, formname, fields, sender)
 	if fields.channel then
 		local meta = minetest.get_meta (pos)
