@@ -35,7 +35,7 @@ local function register_bundle (color)
 		node_box = {
 			type = "connected",
 			fixed = 				{ -2/16, -8/16, -2/16,  2/16, -4/16,  2/16 },
-			connect_top = 		{ -2/16, -5/16, -2/16,  2/16,  8/16,  2/16 },
+			connect_top = 		{ -2/16, -4/16, -2/16,  2/16,  8/16,  2/16 },
 			connect_front = 	{ -2/16, -8/16, -8/16,  2/16, -4/16, -2/16 },
 			connect_left =  	{ -8/16, -8/16, -2/16, -2/16, -4/16,  2/16 },
 			connect_back =  	{ -2/16, -8/16,  2/16,  2/16, -4/16,  8/16 },
@@ -48,7 +48,7 @@ local function register_bundle (color)
 		selection_box = {
 			type = "connected",
 			fixed = 				{ -2/16, -8/16, -2/16,  2/16, -4/16,  2/16 },
-			connect_top = 		{ -2/16, -5/16, -2/16,  2/16,  8/16,  2/16 },
+			connect_top = 		{ -2/16, -4/16, -2/16,  2/16,  8/16,  2/16 },
 			connect_front = 	{ -2/16, -8/16, -8/16,  2/16, -4/16, -2/16 },
 			connect_left =  	{ -8/16, -8/16, -2/16, -2/16, -4/16,  2/16 },
 			connect_back =  	{ -2/16, -8/16,  2/16,  2/16, -4/16,  8/16 },

@@ -97,6 +97,10 @@ local notify_positions = { }
 
 
 
+-- notifications -------------------------------------------------------
+
+
+
 local function add_node_notify_on (pos)
 	for i = 1, #switch_coords, 1 do
 		local test_pos = vector.add (pos, switch_coords[i])
@@ -113,7 +117,7 @@ end
 local function add_node_notify_off (pos)
 	for i = 1, #switch_coords, 1 do
 		local test_pos = vector.add (pos, switch_coords[i])
-		local wires = utils.get_wires_interface (pos)
+		local wires = utils.get_wires_interface (test_pos)
 
 		if wires and wires.bundle_off then
 			notify_positions[minetest.pos_to_string (test_pos, 0)] = true
@@ -160,6 +164,10 @@ local function notify_off (action_wires, action_pos)
 
 	notify_positions = { }
 end
+
+
+
+-- mesecons integration ------------------------------------------------
 
 
 
@@ -438,6 +446,28 @@ end
 
 
 
+local function action_mesecons_effector (pos, rule, newstate)
+	local node, wire, mese = utils.get_component_interface (pos)
+
+	if not wire and mese and mese.effector and mese.effector.action_change then
+		local _, r = get_linked_rules (pos, vector.subtract (pos, rule), mese.effector.rules, node)
+
+		if r then
+			mese.effector.action_change (pos, node, r, newstate)
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+
+-- circuit analysis ----------------------------------------------------
+
+
+
 -- look for adjacent bundle power source
 local function find_bundle_power_source (pos, color, check_list)
 	for i = 1, #switch_coords, 1 do
@@ -515,6 +545,8 @@ local function check_for_power (color, pos, caller_pos, caller_type,
 				power_found = true
 
 				return false, false, caller_type, caller_color, true
+			else
+				return false, false, caller_type, caller_color, true
 			end
 		end
 
@@ -579,12 +611,35 @@ local function is_pos_powered_wire (color, pos, exclude_pos, check_self, check_l
 			power_found = false
 			check_list[sepos] = true
 
-			for_each (color, pos, check_for_power, not check_self, powered_coords, check_list)
+			if mese.effector then
+				local rules = get_mesecons_rules (mese.effector.rules, node)
 
-			if power_found then
-				power_found = false
+				if rules then
+					rules = mesecon.flattenrules (rules)
 
-				return true
+					check_list[spos] = true
+
+					for _, r in ipairs (rules) do
+						if is_connected_by_rule (pos, r, true, true, false) then
+							for_each_recurse (color, vector.add (pos, r), pos, "wire", color,
+													true, check_for_power, powered_coords, check_list)
+						end
+
+						if power_found then
+							power_found = false
+
+							return true
+						end
+					end
+				end
+			else
+				for_each (color, pos, check_for_power, not check_self, powered_coords, check_list)
+
+				if power_found then
+					power_found = false
+
+					return true
+				end
 			end
 		end
 
@@ -750,12 +805,29 @@ end
 
 
 
+-- turn off according to rules but only if not powered
+local function turn_on_nodes (pos, rules)
+	for i = #rules, 1, -1 do
+		local tpos = vector.add (pos, rules[i])
+
+		if action_mesecons_effector (tpos, rules[i], mesecon.state.on) then
+			table.remove (rules, i)
+		end
+	end
+
+	if #rules > 0 then
+		mesecon.receptor_on (pos, rules)
+	end
+end
+
+
+
 -- switch all adjacent nodes that are off to on
 local function switch_pos_on (pos)
 	local rules = get_switchable_sides_on (pos)
 
 	if rules then
-		mesecon.receptor_on (pos, rules)
+		turn_on_nodes (pos, rules)
 	end
 end
 
@@ -782,7 +854,7 @@ local function turn_wire_on (color, pos, caller_pos, caller_type,
 			local rules = get_switchable_sides_on (pos)
 
 			if rules then
-				mesecon.receptor_on (pos, rules)
+				turn_on_nodes (pos, rules)
 			end
 
 			return true, true, wires.type, wires.color, false
@@ -956,11 +1028,16 @@ local function turn_off_nodes (color, pos, rules, check_list)
 
 	for i = #rules, 1, -1 do
 		local tpos = vector.add (pos, rules[i])
-		local cl = table.copy (check_list)
-		local power = is_pos_powered (color, tpos, pos, true, cl)
 
-		if power then
+		if action_mesecons_effector (tpos, rules[i], mesecon.state.off) then
 			table.remove (rules, i)
+		else
+			local cl = table.copy (check_list)
+			local power = is_pos_powered (color, tpos, pos, true, cl)
+
+			if power then
+				table.remove (rules, i)
+			end
 		end
 	end
 

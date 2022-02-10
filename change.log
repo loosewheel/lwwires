@@ -16,3 +16,9 @@ v0.1.1
 v0.1.2
 *	Improved circuit analysis.
 *	Improved mesecons integration.
+
+
+v0.1.3
+*	Visually connects to more items.
+*	Fixed bundles and wires selection box.
+*	Improved mesecons integration for complex devices.

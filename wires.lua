@@ -60,7 +60,7 @@ local function register_wire (color)
 		selection_box = {
 			type = "connected",
 			fixed = 				{ -2/16, -8/16, -2/16,  2/16, -6/16,  2/16 },
-			connect_top = 		{ -2/16, -5/16, -2/16,  2/16,  8/16,  2/16 },
+			connect_top = 		{ -2/16, -6/16, -2/16,  2/16,  8/16,  2/16 },
 			connect_front = 	{ -2/16, -8/16, -8/16,  2/16, -6/16, -2/16 },
 			connect_left =  	{ -8/16, -8/16, -2/16, -2/16, -6/16,  2/16 },
 			connect_back =  	{ -2/16, -8/16,  2/16,  2/16, -6/16,  8/16 },
