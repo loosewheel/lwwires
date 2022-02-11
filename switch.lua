@@ -38,7 +38,7 @@ local function get_current_state (pos, bundle_pos)
 	local meta = minetest.get_meta (pos)
 
 	if not meta then
-		return
+		return { }
 	end
 
 	return check_state_table (minetest.deserialize (meta:get_string ("state")))
@@ -65,11 +65,11 @@ local function switch_on (pos, wires)
 		state[colors[i]] = true
 	end
 
-	meta:set_string ("state", minetest.serialize (state))
-
 	for i = 1, #sides, 1 do
 		lwwires.bundle_on (pos, vector.add (pos, sides[i]), colors)
 	end
+
+	meta:set_string ("state", minetest.serialize (state))
 end
 
 

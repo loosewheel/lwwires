@@ -52,7 +52,7 @@ function lwwires.bundle_off (src_pos, pos, wires)
 		return false
 	end
 
-	utils.wire_connections.turn_off (src_pos, colors, pos, true)
+	utils.wire_connections.turn_off (src_pos, colors, pos)
 end
 
 

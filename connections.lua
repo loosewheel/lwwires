@@ -35,7 +35,7 @@ local function for_each_recurse (color, pos, caller_pos, caller_type, caller_col
 											is_mesecons, func, test_coords, check_list)
 	local spos = minetest.pos_to_string (pos, 0)
 
-	if check_list[spos] ~= true then
+	if not check_list[spos] then
 		local continue, checked, con_type, con_color, con_mesecons =
 			func (color, pos, caller_pos, caller_type, caller_color, is_mesecons, check_list)
 
@@ -101,26 +101,42 @@ local notify_positions = { }
 
 
 
-local function add_node_notify_on (pos)
+local function add_node_notify_on (pos, color)
 	for i = 1, #switch_coords, 1 do
 		local test_pos = vector.add (pos, switch_coords[i])
 		local wires = utils.get_wires_interface (test_pos)
 
 		if wires and wires.bundle_on then
-			notify_positions[minetest.pos_to_string (test_pos, 0)] = true
+			local stest_pos = minetest.pos_to_string (test_pos, 0)
+			local list = notify_positions[stest_pos]
+
+			if not list then
+				notify_positions[stest_pos] = { }
+				list = notify_positions[stest_pos]
+			end
+
+			list[color] = true
 		end
 	end
 end
 
 
 
-local function add_node_notify_off (pos)
+local function add_node_notify_off (pos, color)
 	for i = 1, #switch_coords, 1 do
 		local test_pos = vector.add (pos, switch_coords[i])
 		local wires = utils.get_wires_interface (test_pos)
 
 		if wires and wires.bundle_off then
-			notify_positions[minetest.pos_to_string (test_pos, 0)] = true
+			local stest_pos = minetest.pos_to_string (test_pos, 0)
+			local list = notify_positions[stest_pos]
+
+			if not list then
+				notify_positions[stest_pos] = { }
+				list = notify_positions[stest_pos]
+			end
+
+			list[color] = true
 		end
 	end
 end
@@ -128,7 +144,7 @@ end
 
 
 local function notify_on (action_wires, action_pos)
-	for k, _ in pairs (notify_positions) do
+	for k, v in pairs (notify_positions) do
 		if k ~= action_pos then
 			local pos = minetest.string_to_pos (k)
 
@@ -136,7 +152,13 @@ local function notify_on (action_wires, action_pos)
 				local wires = utils.get_wires_interface (pos)
 
 				if wires and wires.bundle_on then
-					wires.bundle_on (pos, table.copy (action_wires))
+					local colors = { }
+
+					for color, _ in pairs (v) do
+						colors[#colors + 1] = color
+					end
+
+					wires.bundle_on (pos, colors)
 				end
 			end
 		end
@@ -148,7 +170,7 @@ end
 
 
 local function notify_off (action_wires, action_pos)
-	for k, _ in pairs (notify_positions) do
+	for k, v in pairs (notify_positions) do
 		if k ~= action_pos then
 			local pos = minetest.string_to_pos (k)
 
@@ -156,7 +178,13 @@ local function notify_off (action_wires, action_pos)
 				local wires = utils.get_wires_interface (pos)
 
 				if wires and wires.bundle_off then
-					wires.bundle_off (pos, table.copy (action_wires))
+					local colors = { }
+
+					for color, _ in pairs (v) do
+						colors[#colors + 1] = color
+					end
+
+					wires.bundle_off (pos, colors)
 				end
 			end
 		end
@@ -845,7 +873,7 @@ local function turn_wire_on (color, pos, caller_pos, caller_type,
 				return false, false, wires.type, wires.color, false
 			end
 
-			add_node_notify_on (pos)
+			add_node_notify_on (pos, color)
 
 			return true, true, wires.type, wires.color, false
 		end
@@ -877,14 +905,8 @@ function connections.turn_on (src_pos, wires, pos)
 		local action_pos = (src_pos and minetest.pos_to_string (src_pos, 0)) or ""
 
 		for i = 1, #action_wires, 1 do
-			local sides = get_unpowered_directions (action_wires[i], pos)
-			local check_list = { [spos] = true }
-
-			if sides then
-				for j = 1, #sides, 1 do
-					for_each (action_wires[i], vector.add (pos, sides[j]),
-								 turn_wire_on, false, powered_coords, check_list)
-				end
+			if not is_pos_powered_wire (action_wires[i], pos, src_pos, true, { }) then
+				for_each (action_wires[i], pos, turn_wire_on, false, powered_coords, { })
 			end
 		end
 
@@ -892,6 +914,19 @@ function connections.turn_on (src_pos, wires, pos)
 
 		notify_on (action_wires, action_pos)
 	end
+end
+
+
+
+-- turn power on, exclusively for wire mesecons.action_on
+function connections.turn_on_wire (wires, pos, rule)
+	local src_pos = nil
+
+	if rule and rule.x then
+		src_pos = vector.add (pos, rule)
+	end
+
+	connections.turn_on (src_pos, wires, pos)
 end
 
 
@@ -1060,7 +1095,7 @@ local function turn_wire_off (color, pos, caller_pos, caller_type,
 				return false, false, wires.type, wires.color, false
 			end
 
-			add_node_notify_off (pos)
+			add_node_notify_off (pos, color)
 
 			return true, true, wires.type, wires.color, false
 		end
@@ -1094,7 +1129,7 @@ end
 
 -- turn power off at pos, must be wire or bundle
 -- if src_pos is give will not be notified
-function connections.turn_off (src_pos, wires, pos, bundle)
+function connections.turn_off (src_pos, wires, pos)
 	local spos = minetest.pos_to_string (pos, 0)
 	local inter = utils.get_wires_interface (pos)
 
@@ -1103,13 +1138,8 @@ function connections.turn_off (src_pos, wires, pos, bundle)
 		local action_pos = (src_pos and minetest.pos_to_string (src_pos, 0)) or ""
 
 		for i = 1, #action_wires, 1 do
-			local sides = get_unpowered_directions (action_wires[i], pos)
-
-			if sides then
-				for j = 1, #sides, 1 do
-					for_each (action_wires[i], vector.add (pos, sides[j]),
-								 turn_wire_off, false, powered_coords, { })
-				end
+			if not is_pos_powered_wire (action_wires[i], pos, src_pos, true, { }) then
+				for_each (action_wires[i], pos, turn_wire_off, false, powered_coords, { })
 			end
 		end
 
@@ -1128,7 +1158,7 @@ function connections.turn_off_wire (color, pos)
 	if sides_on then
 		switch_pos_on (pos)
 	else
-		connections.turn_off (pos, { color }, pos, false)
+		connections.turn_off (pos, { color }, pos)
 	end
 end
 

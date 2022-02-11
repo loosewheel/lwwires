@@ -7,14 +7,14 @@ local function register_bundle (color)
 	minetest.register_node ("lwwires:bundle_"..color, {
 		description = S("Wire Bundle ("..color..")"),
 		short_description = S("Wire Bundle ("..color..")"),
-		groups = { dig_immediate = 2, lwwires_bundle = 1 },
+		groups = { dig_immediate = 3, lwwires_bundle = 1 },
 		inventory_image = "lwwires_bundle_"..color.."_item.png",
 		wield_image = "lwwires_bundle_"..color.."_wield.png",
 		wield_scale = {x = 1, y = 1, z = 1},
 		stack_max = 99,
 		liquids_pointable = false,
 		light_source = 0,
-		--sound = { },
+		sounds = default.node_sound_defaults (),
 		drawtype = "nodebox",
 		visual_scale = 1.0,
 		tiles = { "lwwires_bundle_"..color.."_y.png", "lwwires_bundle_"..color.."_y.png",
@@ -68,7 +68,7 @@ local function register_bundle (color)
 		end,
 
 		on_destruct = function (pos)
-			mesecon.queue:add_action (pos, "lwwires_bundle_on_destruct", { color.."" }, 0.1, true, 0)
+			mesecon.queue:add_action (pos, "lwwires_bundle_on_destruct", { color }, 0.1, true, 0)
 		end,
 
 		on_blast = function (pos, intensity)

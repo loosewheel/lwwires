@@ -315,4 +315,9 @@ end
 
 
 
+-- flag to lock out mesecons action_on during construction
+utils.wire_on_construct_lockout_flag = false
+
+
+
 --
