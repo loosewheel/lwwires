@@ -62,14 +62,6 @@ if multiple power sources are connected via the wires, and the power
 source connected to the mesecons circuit is turned off.
 
 
-Through Wires
--------------
-Through wires can be placed on the opposite side of a block from a switch
-or button to transmit power (similar to mesecons receivers). They can be
-placed one to two blocks apart opposing each other to transmit through
-solid blocks.
-
-
 Bundle Switch
 -------------
 The bundle switch is only defined if digilines is loaded. The bundle switch
