@@ -58,97 +58,6 @@ utils.colors =
 
 
 
-utils.connect_to =
-{
-	"group:mesecon_needs_receiver",
-	"mesecons_blinkyplant:blinky_plant_on",
-	"mesecons_blinkyplant:blinky_plant_off",
-	"mesecons_commandblock:commandblock_off",
-	"mesecons_commandblock:commandblock_on",
-	"mesecons_detector:object_detector_off",
-	"mesecons_detector:object_detector_on",
-	"mesecons_detector:node_detector_off",
-	"mesecons_detector:node_detector_on",
-	"group:mesecon", -- lightstone, power_plant, fpga, microcontroller,
-	"mesecons_hydroturbine:hydro_turbine_off",
-	"mesecons_hydroturbine:hydro_turbine_on",
-	"group:mesecon_effector_on", -- lamp
-	"group:mesecon_effector_off", -- lamp, lightstone
-	"mesecons_luacontroller:luacontroller0000",
-	"mesecons_luacontroller:luacontroller0001",
-	"mesecons_luacontroller:luacontroller0010",
-	"mesecons_luacontroller:luacontroller0011",
-	"mesecons_luacontroller:luacontroller0100",
-	"mesecons_luacontroller:luacontroller0101",
-	"mesecons_luacontroller:luacontroller0110",
-	"mesecons_luacontroller:luacontroller0111",
-	"mesecons_luacontroller:luacontroller1000",
-	"mesecons_luacontroller:luacontroller1001",
-	"mesecons_luacontroller:luacontroller1010",
-	"mesecons_luacontroller:luacontroller1011",
-	"mesecons_luacontroller:luacontroller1100",
-	"mesecons_luacontroller:luacontroller1101",
-	"mesecons_luacontroller:luacontroller1110",
-	"mesecons_luacontroller:luacontroller1111",
-	"mesecons_movestones:movestone",
-	"mesecons_movestones:sticky_movestone",
-	"mesecons_movestones:movestone_vertical",
-	"mesecons_movestones:sticky_movestone_vertical",
-	"mesecons_noteblock:noteblock",
-	"mesecons_pistons:piston_normal_off",
-	"mesecons_pistons:piston_normal_on",
-	"mesecons_pistons:piston_sticky_off",
-	"mesecons_pistons:piston_sticky_on",
-	"mesecons_pressureplates:pressure_plate_wood_on",
-	"mesecons_pressureplates:pressure_plate_wood_off",
-	"mesecons_pressureplates:pressure_plate_stone_on",
-	"mesecons_pressureplates:pressure_plate_stone_off",
-	"mesecons_random:removestone",
-	"mesecons_random:ghoststone",
-	"mesecons_random:ghoststone_active",
-	--"mesecons_receiver:receiver",
-	--"mesecons_receiver:receiver_up",
-	--"mesecons_receiver:receiver_down",
-	"mesecons_solarpanel:solar_panel",
-	"mesecons_stickyblocks:sticky_block_all",
-	"mesecons_switch:mesecon_switch_on",
-	"mesecons_switch:mesecon_switch_off",
-	"mesecons_torch:mesecon_torch_off",
-	"mesecons_torch:mesecon_torch_on",
-	"mesecons_extrawires:vertical_on",
-	"mesecons_extrawires:vertical_off",
-	"mesecons_extrawires:vertical_top_on",
-	"mesecons_extrawires:vertical_top_off",
-	"mesecons_extrawires:vertical_bottom_on",
-	"mesecons_extrawires:vertical_bottom_off",
-	"mesecons_solarpanel:solar_panel_off",
-	"mesecons_solarpanel:solar_panel_on",
-	"mesecons_gates:diode_off",
-	"mesecons_gates:not_off",
-	"mesecons_gates:and_off",
-	"mesecons_gates:nand_off",
-	"mesecons_gates:xor_off",
-	"mesecons_gates:nor_off",
-	"mesecons_gates:or_off",
-	"mesecons_gates:diode_on",
-	"mesecons_gates:not_on",
-	"mesecons_gates:and_on",
-	"mesecons_gates:nand_on",
-	"mesecons_gates:xor_on",
-	"mesecons_gates:nor_on",
-	"mesecons_gates:or_on",
-	"mesecons_delayer:delayer_off_1",
-	"mesecons_delayer:delayer_off_2",
-	"mesecons_delayer:delayer_off_3",
-	"mesecons_delayer:delayer_off_4",
-	"mesecons_delayer:delayer_on_1",
-	"mesecons_delayer:delayer_on_2",
-	"mesecons_delayer:delayer_on_3",
-	"mesecons_delayer:delayer_on_4",
-}
-
-
-
 function utils.get_far_node (pos)
 	local node = minetest.get_node (pos)
 
@@ -177,6 +86,21 @@ function utils.can_interact_with_node (pos, player)
 	end
 
 	return not minetest.is_protected (pos, "")
+end
+
+
+
+function utils.is_creative (player)
+	if minetest.settings:get_bool ("creative_mode") then
+		return true
+	end
+
+	if player and player:is_player () then
+		return minetest.is_creative_enabled (player:get_player_name ()) or
+				 minetest.check_player_privs (player, "creative")
+	end
+
+	return false
 end
 
 

@@ -52,9 +52,8 @@ local function register_wire (color)
 			connect_right = 	{  2/16, -8/16, -2/16,  8/16, -6/16,  2/16 }
 		},
 		connect_sides = { "top", "front", "left", "back", "right" },
-		connects_to = { "group:lwwires_bundle", "lwwires:"..color,
-							 "group:mesecon_conductor_craftable",
-							 "group:wires_connect", unpack (utils.connect_to) },
+		connects_to = { "group:lwwires_bundle", "lwwires:"..color, "group:wires_connect",
+							 "group:mesecon_conductor_craftable" },
 
 		selection_box = {
 			type = "connected",

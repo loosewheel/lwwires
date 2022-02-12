@@ -26,3 +26,9 @@ v0.1.3
 
 v0.1.4
 *	Improved notifications.
+
+
+v0.1.5
+*	Added through wire.
+*	Added terminal.
+*	Improved connection compatibility (visual) with mesecons items.

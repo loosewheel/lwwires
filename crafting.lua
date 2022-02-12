@@ -435,6 +435,23 @@ minetest.register_craft ({
 })
 
 
+minetest.register_craft ({
+	output = "lwwires:through_wire_off 2",
+	recipe = {
+		{ "mesecons:wire_00000000_off", "" },
+		{ "", "mesecons:wire_00000000_off" },
+	}
+})
+
+
+minetest.register_craft ({
+	output = "lwwires:terminal_off 2",
+	recipe = {
+		{ "mesecons:wire_00000000_off", "mesecons:wire_00000000_off" },
+	}
+})
+
+
 if utils.digilines_supported then
 
 minetest.register_craft ({

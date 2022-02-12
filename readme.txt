@@ -13,7 +13,7 @@ CC-BY-SA 3.0
 
 Version
 =======
-0.1.4
+0.1.5
 
 
 Minetest Version
@@ -32,6 +32,31 @@ Optional Dependencies
 =====================
 intllib
 digilines
+mesecons_blinkyplant
+mesecons_button
+mesecons_commandblock
+mesecons_delayer
+mesecons_detector
+mesecons_extrawires
+mesecons_fpga
+mesecons_gates
+mesecons_hydroturbine
+mesecons_lamp
+mesecons_lightstone
+mesecons_luacontroller
+mesecons_microcontroller
+mesecons_movestones
+mesecons_noteblock
+mesecons_pistons
+mesecons_powerplant
+mesecons_pressureplates
+mesecons_random
+mesecons_receiver
+mesecons_solarpanel
+mesecons_switch
+mesecons_torch
+mesecons_walllever
+area_containers
 
 
 Installation
@@ -60,6 +85,26 @@ interface in mod_api.txt about notifications).
 Individual mesecons circuits connected to wires may flick off and then on
 if multiple power sources are connected via the wires, and the power
 source connected to the mesecons circuit is turned off.
+
+Wires will or will not visually connect to a mesecons item. If they connect
+they will connect on any side. This is only visual and only functionally
+connect on the sides the item can.
+
+
+Through Wires and Terminals
+---------------------------
+Through wires and terminals penetrate a block to connect to a mesecons
+device on the opposing side. The device must have the necessary rules to
+accommodate the connection (such as levers and buttons).
+
+Through wires penetrate the surface they are placed against and transmit
+in the other 5 directions.
+
+Terminals only penetrate in a horizontal direction and only transmit in
+the downward direction.
+
+Two through wires or terminals place one to two blocks apart opposing each
+other will transmit power.
 
 
 Bundle Switch
