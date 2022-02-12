@@ -86,9 +86,8 @@ Individual mesecons circuits connected to wires may flick off and then on
 if multiple power sources are connected via the wires, and the power
 source connected to the mesecons circuit is turned off.
 
-Wires will or will not visually connect to a mesecons item. If they connect
-they will connect on any side. This is only visual and only functionally
-connect on the sides the item can.
+If wires visually connect to a mesecons item they connect on any side.
+This is only visual and only functionally connect on the sides the item can.
 
 
 Through Wires and Terminals
