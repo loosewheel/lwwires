@@ -102,8 +102,8 @@ in the other 5 directions.
 Terminals only penetrate in a horizontal direction and only transmit in
 the downward direction.
 
-Two through wires or terminals place one to two blocks apart opposing each
-other will transmit power.
+Two through wires or terminals placed one to two blocks apart opposing
+each other will transmit power.
 
 
 Bundle Switch
