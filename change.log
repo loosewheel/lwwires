@@ -32,3 +32,8 @@ v0.1.5
 *	Added through wire.
 *	Added terminal.
 *	Improved connection compatibility (visual) with mesecons items.
+
+
+v0.1.6
+*	Improved visible connection to through wire.
+*	Improved circuit reaction.

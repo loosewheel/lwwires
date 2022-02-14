@@ -174,7 +174,31 @@ local names =
 	"area_containers:port_px_off",
 	"area_containers:port_nz_on",
 	"area_containers:port_nz_off",
+	"tnt:tnt",
 }
+
+
+-- lots of wires
+for a = 0, 1, 1 do
+	for b = 0, 1, 1 do
+		for c = 0, 1, 1 do
+			for d = 0, 1, 1 do
+				for e = 0, 1, 1 do
+					for f = 0, 1, 1 do
+						for g = 0, 1, 1 do
+							for h = 0, 1, 1 do
+								names[#names + 1] =
+									string.format ("mesecons:wire_%d%d%d%d%d%d%d%d_on", a, b, c, d, e, f, g, h)
+								names[#names + 1] =
+									string.format ("mesecons:wire_%d%d%d%d%d%d%d%d_off", a, b, c, d, e, f, g, h)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
 
 
 

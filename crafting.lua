@@ -436,7 +436,7 @@ minetest.register_craft ({
 
 
 minetest.register_craft ({
-	output = "lwwires:through_wire_off 2",
+	output = "lwwires:through_wire_zp_off 2",
 	recipe = {
 		{ "mesecons:wire_00000000_off", "" },
 		{ "", "mesecons:wire_00000000_off" },

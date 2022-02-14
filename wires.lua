@@ -52,8 +52,7 @@ local function register_wire (color)
 			connect_right = 	{  2/16, -8/16, -2/16,  8/16, -6/16,  2/16 }
 		},
 		connect_sides = { "top", "front", "left", "back", "right" },
-		connects_to = { "group:lwwires_bundle", "lwwires:"..color, "group:wires_connect",
-							 "group:mesecon_conductor_craftable" },
+		connects_to = { "group:lwwires_bundle", "lwwires:"..color, "group:wires_connect" },
 
 		selection_box = {
 			type = "connected",
@@ -77,15 +76,15 @@ local function register_wire (color)
 			effector = {
 				rules = mesecons_rules,
 
-				action_on = function (pos, node, rule)
-					if not utils.wire_on_construct_lockout_flag then
-						utils.wire_connections.turn_on_wire (color, pos, rule)
+				action_change = function (pos, node, rule, newstate)
+					if newstate == mesecon.state.on then
+						if not utils.wire_on_construct_lockout_flag then
+							utils.wire_connections.turn_on_wire (color, pos, rule)
+						end
+					elseif newstate == mesecon.state.off then
+						utils.wire_connections.turn_off_wire (color, pos)
 					end
-				end,
-
-				action_off = function (pos, node, rule)
-					utils.wire_connections.turn_off_wire (color, pos)
-				end,
+				end
 			}
 		},
 
