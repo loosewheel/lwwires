@@ -57,6 +57,7 @@ mesecons_switch
 mesecons_torch
 mesecons_walllever
 area_containers
+tnt
 
 
 Installation
