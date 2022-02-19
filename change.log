@@ -37,3 +37,8 @@ v0.1.5
 v0.1.6
 *	Improved visible connection to through wire.
 *	Improved circuit reaction.
+
+
+v0.1.7
+*	Added per node lockout to wires to avoid inappropriate mesecons action.
+*	Improved mesecons integration to avoid recursive loop back.

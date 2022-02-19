@@ -78,19 +78,26 @@ local function register_wire (color)
 
 				action_change = function (pos, node, rule, newstate)
 					if newstate == mesecon.state.on then
-						if not utils.wire_on_construct_lockout_flag then
+						local meta = minetest.get_meta (pos)
+
+						if meta and meta:get_int ("in_action") == 0 then
 							utils.wire_connections.turn_on_wire (color, pos, rule)
 						end
 					elseif newstate == mesecon.state.off then
-						utils.wire_connections.turn_off_wire (color, pos)
+						utils.wire_connections.turn_off_wire (color, pos, rule)
 					end
 				end
 			}
 		},
 
 		on_construct = function (pos)
-			utils.wire_on_construct_lockout_flag = true
-			mesecon.queue:add_action (pos, "lwwires_wire_on_construct", { color }, 0.1, true, 0)
+			local meta = minetest.get_meta (pos)
+
+			if meta then
+				meta:set_int ("in_action", 1)
+
+				mesecon.queue:add_action (pos, "lwwires_wire_on_construct", { color }, 0.1, nil, 0)
+			end
 		end,
 
 		on_destruct = function (pos)
@@ -101,7 +108,7 @@ local function register_wire (color)
 			local node = minetest.get_node (pos)
 
 			minetest.remove_node (pos)
-			mesecon.queue:add_action (pos, "lwwires_wire_on_blast", { color }, 0.1, true, 0)
+			mesecon.queue:add_action (pos, "lwwires_wire_on_blast", { color }, 0.1, nil, 0)
 
 			return minetest.get_node_drops (node.name, "")
 		end,

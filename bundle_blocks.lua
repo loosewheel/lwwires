@@ -43,7 +43,7 @@ local function register_bundle_block (color)
 		end,
 
 		on_destruct = function (pos)
-			mesecon.queue:add_action (pos, "lwwires_bundle_on_destruct", { color }, 0.1, true, 0)
+			mesecon.queue:add_action (pos, "lwwires_bundle_on_destruct", { color }, 0.1, nil, 0)
 		end,
 
 		on_blast = function (pos, intensity)

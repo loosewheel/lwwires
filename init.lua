@@ -1,4 +1,4 @@
-local version = "0.1.6"
+local version = "0.1.7"
 
 
 
@@ -33,7 +33,12 @@ loadfile (utils.modpath.."/crafting.lua") (utils)
 
 mesecon.queue:add_function ("lwwires_wire_on_construct", function (pos, color)
 	utils.wire_connections.on_construct_wire (color, pos)
-	utils.wire_on_construct_lockout_flag = false
+
+	local meta = minetest.get_meta (pos)
+
+	if meta then
+		meta:from_table (nil)
+	end
 end)
 
 
@@ -46,6 +51,12 @@ end)
 
 mesecon.queue:add_function ("lwwires_bundle_on_destruct", function (pos, color)
 	utils.wire_connections.on_destruct_bundle (color, pos)
+end)
+
+
+
+mesecon.queue:add_function ("lwwires_execute_action_queue", function (pos)
+	utils.wire_connections.execute_action_queue (pos)
 end)
 
 

@@ -88,16 +88,12 @@ end
 
 
 
--- operations ----------------------------------------------------------
-
-
--- variables for operations tally (deep nested)
-local power_found = false
-local notify_positions = { }
-
-
-
 -- notifications -------------------------------------------------------
+
+
+
+local notify_on_positions = { }
+local notify_off_positions = { }
 
 
 
@@ -108,11 +104,11 @@ local function add_node_notify_on (pos, color)
 
 		if wires and wires.bundle_on then
 			local stest_pos = minetest.pos_to_string (test_pos, 0)
-			local list = notify_positions[stest_pos]
+			local list = notify_on_positions[stest_pos]
 
 			if not list then
-				notify_positions[stest_pos] = { }
-				list = notify_positions[stest_pos]
+				notify_on_positions[stest_pos] = { }
+				list = notify_on_positions[stest_pos]
 			end
 
 			list[color] = true
@@ -129,11 +125,11 @@ local function add_node_notify_off (pos, color)
 
 		if wires and wires.bundle_off then
 			local stest_pos = minetest.pos_to_string (test_pos, 0)
-			local list = notify_positions[stest_pos]
+			local list = notify_off_positions[stest_pos]
 
 			if not list then
-				notify_positions[stest_pos] = { }
-				list = notify_positions[stest_pos]
+				notify_off_positions[stest_pos] = { }
+				list = notify_off_positions[stest_pos]
 			end
 
 			list[color] = true
@@ -143,34 +139,8 @@ end
 
 
 
-local function notify_on (action_wires, action_pos)
-	for k, v in pairs (notify_positions) do
-		if k ~= action_pos then
-			local pos = minetest.string_to_pos (k)
-
-			if pos then
-				local wires = utils.get_wires_interface (pos)
-
-				if wires and wires.bundle_on then
-					local colors = { }
-
-					for color, _ in pairs (v) do
-						colors[#colors + 1] = color
-					end
-
-					wires.bundle_on (pos, colors)
-				end
-			end
-		end
-	end
-
-	notify_positions = { }
-end
-
-
-
-local function notify_off (action_wires, action_pos)
-	for k, v in pairs (notify_positions) do
+local function notify (action_wires, action_pos)
+	for k, v in pairs (notify_off_positions) do
 		if k ~= action_pos then
 			local pos = minetest.string_to_pos (k)
 
@@ -190,7 +160,29 @@ local function notify_off (action_wires, action_pos)
 		end
 	end
 
-	notify_positions = { }
+	notify_off_positions = { }
+
+	for k, v in pairs (notify_on_positions) do
+		if k ~= action_pos then
+			local pos = minetest.string_to_pos (k)
+
+			if pos then
+				local wires = utils.get_wires_interface (pos)
+
+				if wires and wires.bundle_on then
+					local colors = { }
+
+					for color, _ in pairs (v) do
+						colors[#colors + 1] = color
+					end
+
+					wires.bundle_on (pos, colors)
+				end
+			end
+		end
+	end
+
+	notify_on_positions = { }
 end
 
 
@@ -492,7 +484,118 @@ end
 
 
 
+local function mesecon_receptor_off (pos, rules)
+	rules = rules or mesecon.rules.default
+
+	-- Call turnoff on all linking positions
+	for _, rule in ipairs (mesecon.flattenrules (rules)) do
+		local np = vector.add (pos, rule)
+		local rulenames = mesecon.rules_link_rule_all (pos, rule)
+
+		for _, rulename in ipairs (rulenames) do
+			mesecon.vm_begin ()
+			mesecon.changesignal (np, minetest.get_node (np), rulename, mesecon.state.off, 2)
+
+			-- Turnoff returns true if turnoff process was successful, no onstate receptor
+			-- was found along the way. Commit changes that were made in voxelmanip. If turnoff
+			-- returns true, an onstate receptor was found, abort voxelmanip transaction.
+			if (mesecon.turnoff (np, rulename)) then
+				mesecon.vm_commit ()
+			else
+				mesecon.vm_abort ()
+			end
+		end
+	end
+end
+
+
+
+local function mesecon_receptor_on (pos, rules)
+	mesecon.vm_begin ()
+
+	rules = rules or mesecon.rules.default
+
+	-- Call turnon on all linking positions
+	for _, rule in ipairs (mesecon.flattenrules (rules)) do
+		local np = vector.add (pos, rule)
+		local rulenames = mesecon.rules_link_rule_all (pos, rule)
+
+		for _, rulename in ipairs (rulenames) do
+			mesecon.turnon (np, rulename)
+		end
+	end
+
+	mesecon.vm_commit ()
+end
+
+
+
+-- action queue --------------------------------------------------------
+
+
+
+local action_queue = { }
+
+
+
+local function add_action_queue (action, pos, rules)
+	for i = #action_queue, 1, -1 do
+		if	vector.equals (pos, action_queue[i].pos) and
+			minetest.serialize (rules) == minetest.serialize (action_queue[i].rules) then
+
+			table.remove (action_queue, i)
+		end
+	end
+
+	action_queue[#action_queue + 1] =
+	{
+		action = action,
+		pos = pos,
+		rules = rules
+	}
+end
+
+
+
+local function queue_receptor_on (pos, rules)
+	add_action_queue ("receptor_on", pos, rules)
+end
+
+
+
+local function queue_receptor_off (pos, rules)
+	add_action_queue ("receptor_off", pos, rules)
+end
+
+
+
+function connections.execute_action_queue (pos)
+	for _, e in ipairs (action_queue) do
+		if e.action == "receptor_on" then
+			mesecon_receptor_on (e.pos, e.rules)
+		elseif e.action == "receptor_off" then
+			mesecon_receptor_off (e.pos, e.rules)
+		end
+	end
+
+	action_queue = { }
+end
+
+
+
+local function run_action_queue (pos)
+	mesecon.queue:add_action (vector.new (pos),
+									  "lwwires_execute_action_queue",
+									  { }, nil, nil, 0)
+end
+
+
+
 -- circuit analysis ----------------------------------------------------
+
+
+
+local power_found = false
 
 
 
@@ -581,7 +684,10 @@ local function check_for_power (color, pos, caller_pos, caller_type,
 		if mese.conductor and is_conductor_on (mese.conductor, node, pos, caller_pos) then
 			local rules = get_linked_rules (pos, caller_pos, mese.conductor.rules, node)
 
-			check_list[minetest.pos_to_string (pos, 0)] = true
+			local raw_rules = get_mesecons_rules (mese.conductor.rules, node)
+			if not raw_rules[1] or raw_rules[1].x then
+				check_list[minetest.pos_to_string (pos, 0)] = true
+			end
 
 			if rules then
 				for _, r in ipairs (rules) do
@@ -844,7 +950,7 @@ local function turn_on_nodes (pos, rules)
 	end
 
 	if #rules > 0 then
-		mesecon.receptor_on (pos, rules)
+		queue_receptor_on (pos, rules)
 	end
 end
 
@@ -912,21 +1018,23 @@ function connections.turn_on (src_pos, wires, pos)
 
 		switch_pos_on (pos)
 
-		notify_on (action_wires, action_pos)
+		notify (action_wires, action_pos)
+
+		run_action_queue (src_pos or pos)
 	end
 end
 
 
 
 -- turn power on, exclusively for wire mesecons.action_on
-function connections.turn_on_wire (wires, pos, rule)
+function connections.turn_on_wire (color, pos, rule)
 	local src_pos = nil
 
 	if rule and rule.x then
 		src_pos = vector.add (pos, rule)
 	end
 
-	connections.turn_on (src_pos, wires, pos)
+	connections.turn_on (src_pos, color, pos)
 end
 
 
@@ -951,7 +1059,9 @@ function connections.on_construct_wire (color, pos)
 			switch_pos_on (pos)
 		end
 
-		notify_on (action_wires, action_pos)
+		notify (action_wires, action_pos)
+
+		run_action_queue (pos)
 	end
 end
 
@@ -989,7 +1099,9 @@ function connections.on_construct_bundle (pos)
 			end
 		end
 
-		notify_on (action_wires, action_pos)
+		notify (action_wires, action_pos)
+
+		run_action_queue (pos)
 	end
 end
 
@@ -1077,7 +1189,7 @@ local function turn_off_nodes (color, pos, rules, check_list)
 	end
 
 	if #rules > 0 then
-		mesecon.receptor_off (pos, rules)
+		queue_receptor_off (pos, rules)
 	end
 end
 
@@ -1145,18 +1257,22 @@ function connections.turn_off (src_pos, wires, pos)
 
 		switch_pos_off (pos)
 
-		notify_off (action_wires, action_pos)
+		notify (action_wires, action_pos)
+
+		run_action_queue (src_pos)
 	end
 end
 
 
 
 -- turn power off, exclusively for wire mesecons.action_off
-function connections.turn_off_wire (color, pos)
+function connections.turn_off_wire (color, pos, rule)
 	local sides_on = get_powered_directions (color, pos)
 
 	if sides_on then
 		switch_pos_on (pos)
+		run_action_queue (pos)
+		notify ({ color }, minetest.pos_to_string (pos))
 	else
 		connections.turn_off (pos, { color }, pos)
 	end
@@ -1205,7 +1321,9 @@ function connections.on_destruct_wire (color, pos)
 			turn_off_nodes (color, pos, switch_off_rules, { [spos] = true })
 		end
 
-		notify_off (action_wires, action_pos)
+		notify (action_wires, action_pos)
+
+		run_action_queue (pos)
 	end
 end
 
@@ -1246,7 +1364,9 @@ function connections.on_blast_wire (color, pos)
 		end
 	end
 
-	notify_off (action_wires, action_pos)
+	notify (action_wires, action_pos)
+
+	run_action_queue (pos)
 end
 
 
@@ -1286,7 +1406,9 @@ function connections.on_destruct_bundle (color, pos)
 		end
 	end
 
-	notify_off (action_wires, action_pos)
+	notify (action_wires, action_pos)
+
+	run_action_queue (pos)
 end
 
 
