@@ -342,6 +342,7 @@ minetest.register_node ("lwwires:switch", {
    on_construct = on_construct,
    on_destruct = on_destruct,
 	on_receive_fields = on_receive_fields,
+	on_blast = on_blast
 })
 
 

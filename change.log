@@ -42,3 +42,7 @@ v0.1.6
 v0.1.7
 *	Added per node lockout to wires to avoid inappropriate mesecons action.
 *	Improved mesecons integration to avoid recursive loop back.
+
+
+v0.1.8
+*	Code cleanup.

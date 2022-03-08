@@ -1,4 +1,4 @@
-local version = "0.1.7"
+local version = "0.1.8"
 
 
 
@@ -26,7 +26,7 @@ loadfile (utils.modpath.."/bundle_blocks.lua") (utils)
 loadfile (utils.modpath.."/through_wire.lua") (utils)
 loadfile (utils.modpath.."/terminal.lua") (utils)
 loadfile (utils.modpath.."/switch.lua") (utils)
-loadfile (utils.modpath.."/compatibility.lua") (utils)
+loadfile (utils.modpath.."/compatibility.lua") ()
 loadfile (utils.modpath.."/crafting.lua") (utils)
 
 

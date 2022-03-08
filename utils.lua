@@ -159,8 +159,8 @@ end
 
 
 function utils.is_wire_in_list (wire, list)
-	local scolor = nil
-	local icolor = nil
+	local scolor
+	local icolor
 
 	if type (wire) == "string" then
 		icolor = utils.colors[wire]

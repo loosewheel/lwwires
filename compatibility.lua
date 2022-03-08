@@ -1,7 +1,3 @@
-local utils = ...
-local S = utils.S
-
-
 
 local names =
 {
@@ -221,8 +217,6 @@ for _, name in ipairs (names) do
 	add_wire_compatibility (name)
 end
 
-
-names = nil
 
 
 --

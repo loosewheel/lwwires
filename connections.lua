@@ -59,7 +59,7 @@ local function for_each (color, pos, func, not_first, test_coords, check_list)
 
 	if not check_list[spos] then
 		local continue, checked, con_type, con_color, con_mesecons = true, true, "wire", color, false
-		local node, wires, mese = utils.get_component_interface (pos)
+		local _, wires, mese = utils.get_component_interface (pos)
 
 		if wires and wires.type then
 			con_type = wires.type
@@ -258,21 +258,21 @@ local function is_connected_by_rule (pos, rule, conductors, receptors, effectors
 
 		if mese then
 			if conductors and mese.conductor then
-				local rs, r = get_linked_rules (tpos, pos, mese.conductor.rules, node)
+				local _, r = get_linked_rules (tpos, pos, mese.conductor.rules, node)
 
 				if r then
 					return true
 				end
 
 			elseif receptors and mese.receptor then
-				local rs, r = get_linked_rules (tpos, pos, mese.receptor.rules, node)
+				local _, r = get_linked_rules (tpos, pos, mese.receptor.rules, node)
 
 				if r then
 					return true
 				end
 
 			elseif effectors and mese.effector then
-				local rs, r = get_linked_rules (tpos, pos, mese.effector.rules, node)
+				local _, r = get_linked_rules (tpos, pos, mese.effector.rules, node)
 
 				if r then
 					return true
@@ -302,7 +302,7 @@ local function is_connected_by_rules (pos, connect_pos, test, test_back)
 
 	if mese then
 		if test.conductors and mese.conductor then
-			local rs, r = get_linked_rules (pos, connect_pos, mese.conductor.rules, node)
+			local _, r = get_linked_rules (pos, connect_pos, mese.conductor.rules, node)
 
 			if r then
 				if one_way then
@@ -314,7 +314,7 @@ local function is_connected_by_rules (pos, connect_pos, test, test_back)
 		end
 
 		if test.receptors and mese.receptor then
-			local rs, r = get_linked_rules (pos, connect_pos, mese.receptor.rules, node)
+			local _, r = get_linked_rules (pos, connect_pos, mese.receptor.rules, node)
 
 			if r then
 				if one_way then
@@ -326,7 +326,7 @@ local function is_connected_by_rules (pos, connect_pos, test, test_back)
 		end
 
 		if test.effectors and mese.effector then
-			local rs, r = get_linked_rules (pos, connect_pos, mese.effector.rules, node)
+			local _, r = get_linked_rules (pos, connect_pos, mese.effector.rules, node)
 
 			if r then
 				if one_way then
@@ -440,7 +440,7 @@ end
 
 -- is mesecons power state on
 local function is_mesecons_power (pos, connect_pos)
-	local node, wires, mese = utils.get_component_interface (pos)
+	local _, wires, mese = utils.get_component_interface (pos)
 
 	if not wires and mese and mese.receptor and
 			mese.receptor.state == mesecon.state.on then
@@ -459,7 +459,7 @@ end
 
 -- is a mesecons component
 local function is_mesecons_component (pos)
-	local node, wires, mese = utils.get_component_interface (pos)
+	local _, wires, mese = utils.get_component_interface (pos)
 
 	return not wires and mese ~= nil
 end
@@ -873,7 +873,7 @@ local function get_powered_directions (color, pos, check_list)
 end
 
 
-
+--[[
 -- returns list of adjacent sides that do not have power to them
 local function get_unpowered_directions (color, pos, check_list)
 	local sides = { }
@@ -911,7 +911,7 @@ local function get_unpowered_directions (color, pos, check_list)
 
 	return nil
 end
-
+]]
 
 
 -- turn on -------------------------------------------------------------
@@ -971,7 +971,7 @@ end
 -- returns continue, checked, con_type, con_color, is_mesecons
 local function turn_wire_on (color, pos, caller_pos, caller_type,
 									  caller_color, is_mesecons, check_list)
-	local node, wires, mese = utils.get_component_interface (pos)
+	local _, wires = utils.get_component_interface (pos)
 
 	if wires then
 		if wires.type == "bundle" then
@@ -1003,7 +1003,6 @@ end
 -- turn power on at pos, must be wire or bundle
 -- if src_pos is give will not be notified
 function connections.turn_on (src_pos, wires, pos)
-	local spos = minetest.pos_to_string (pos, 0)
 	local inter = utils.get_wires_interface (pos)
 
 	if inter then
@@ -1199,7 +1198,7 @@ end
 -- returns continue, checked, con_type, con_color, is_mesecons
 local function turn_wire_off (color, pos, caller_pos, caller_type,
 										caller_color, is_mesecons, check_list)
-	local node, wires, mese = utils.get_component_interface (pos)
+	local _, wires = utils.get_component_interface (pos)
 
 	if wires then
 		if wires.type == "bundle" then
@@ -1242,7 +1241,6 @@ end
 -- turn power off at pos, must be wire or bundle
 -- if src_pos is give will not be notified
 function connections.turn_off (src_pos, wires, pos)
-	local spos = minetest.pos_to_string (pos, 0)
 	local inter = utils.get_wires_interface (pos)
 
 	if inter then
