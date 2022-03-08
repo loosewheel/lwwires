@@ -91,7 +91,7 @@ If wires visually connect to a mesecons item they connect on any side.
 This is only visual and only functionally connect on the sides the item can.
 
 If mesecons devices are moved against wires (as with pistons) they are not
-automatically actived if the circuit is on.
+automatically activated if the circuit is on.
 
 
 Through Wires and Terminals
