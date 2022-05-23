@@ -162,7 +162,7 @@ end
 
 
 
-local function send_bundle_on (pos, wires)
+local function send_bundle_on (pos, wires, bundle_pos)
 	local meta = minetest.get_meta (pos)
 
 	if meta then
@@ -183,7 +183,7 @@ end
 
 
 
-local function send_bundle_off (pos, wires)
+local function send_bundle_off (pos, wires, bundle_pos)
 	local meta = minetest.get_meta (pos)
 
 	if meta then

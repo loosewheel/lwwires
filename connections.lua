@@ -109,6 +109,7 @@ local function add_node_notify_on (pos, color)
 			if not list then
 				notify_on_positions[stest_pos] = { }
 				list = notify_on_positions[stest_pos]
+				list.bundle_pos = vector.new (pos)
 			end
 
 			list[color] = true
@@ -130,6 +131,7 @@ local function add_node_notify_off (pos, color)
 			if not list then
 				notify_off_positions[stest_pos] = { }
 				list = notify_off_positions[stest_pos]
+				list.bundle_pos = vector.new (pos)
 			end
 
 			list[color] = true
@@ -151,10 +153,12 @@ local function notify (action_wires, action_pos)
 					local colors = { }
 
 					for color, _ in pairs (v) do
-						colors[#colors + 1] = color
+						if color ~= "bundle_pos" then
+							colors[#colors + 1] = color
+						end
 					end
 
-					wires.bundle_off (pos, colors)
+					wires.bundle_off (pos, colors, v.bundle_pos)
 				end
 			end
 		end
@@ -173,10 +177,12 @@ local function notify (action_wires, action_pos)
 					local colors = { }
 
 					for color, _ in pairs (v) do
-						colors[#colors + 1] = color
+						if color ~= "bundle_pos" then
+							colors[#colors + 1] = color
+						end
 					end
 
-					wires.bundle_on (pos, colors)
+					wires.bundle_on (pos, colors, v.bundle_pos)
 				end
 			end
 		end

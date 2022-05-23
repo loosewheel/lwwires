@@ -8,12 +8,12 @@ A node adjacent to a bundle can have the following interface in its
 definition to respond to bundle cable events:
 def._wires =
 {
-	bundle_on = function (pos, wires)
+	bundle_on = function (pos, wires, bundle_pos)
 		-- called to notify when any wires are turned on
 		-- no return used
 	end,
 
-	bundle_off = function (pos, wires)
+	bundle_off = function (pos, wires, bundle_pos)
 		-- called to notify when any wires are turned off
 		-- no return used
 	end,
@@ -25,7 +25,8 @@ def._wires =
 }
 pos is the position of the node.
 wires is a list of wire color strings affected by the action.
-bundle_pos is the position of the bundle cable querying the state.
+bundle_pos is the position of the bundle cable sending the notification or
+querying the state.
 
 When implementing the current_state callback, the state should be updated
 after a call to lwwires.bundle_on but before a call to lwwires.bundle_off.
